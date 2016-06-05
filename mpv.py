@@ -116,6 +116,10 @@ def seed_playlist(playlist):
 
 def episode():
   filename = get_property("path")
+
+  if not filename:
+    return ""
+
   return basename(filename).split(".")[0]
 
 def time_pos():
@@ -142,8 +146,8 @@ if __name__ == '__main__':
     },
     "s02e07": {
       "ranges": [
-        (140.52, 237.5),
-        (2663.45, float("inf"))
+        (140.52, 237.65),
+        (2663.3, float("inf"))
       ]
     }
   }
@@ -154,7 +158,7 @@ if __name__ == '__main__':
     mpv_playlist = get_property("playlist")
 
     if not mpv_playlist:
-      break
+      continue
 
     ep = episode()
 
