@@ -21,8 +21,9 @@ filters = "|".join([
   "clips",
   "extra",
   "images",
-  "jpg",
-  "png",
+  "feh.*filelist",
+  # "\.jpg",
+  "\.png",
   "screenshots",
   "special_features",
   "srt",
@@ -215,7 +216,7 @@ def sig_handler(signal, frame):
 
 def parse_args():
   parser = argparse.ArgumentParser(
-      description='Do stuff',
+      description='Load files into mpv for playback',
       prog='video_player.py',
       usage='%(prog)s [options]',
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -257,6 +258,12 @@ def parse_args():
       help='Seed playlist')
 
   group.add_argument(
+      '--skip',
+      default=False,
+      action='store_true',
+      help='Skip over boring sections of videos')
+
+  group.add_argument(
       '--no-ask-shows',
       default=False,
       action='store_true',
@@ -276,10 +283,15 @@ if __name__ == '__main__':
   if args.seed:
     seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
 
+  if not args.skip and not args.loop:
+    exit()
+
   while True:
-    # if args.loop:
-    #   seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
+    if args.loop:
+      seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
+    else:
+      if args.skip:
+        watch_video()
     # else:
     #   break
-    watch_video()
 
