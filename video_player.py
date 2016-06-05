@@ -2,155 +2,28 @@
 
 from pprint import pprint
 import argparse
-import json
 import os
-import random
-import re
 import signal
 import subprocess
 import sys
 import time
 
-import tv
 import mpv
+import playlist
+import tv
 
 basename = os.path.basename
 
-filters = "|".join([
-  "\.alt",
-  "clips",
-  "extra",
-  "images",
-  "feh.*filelist",
-  # "\.jpg",
-  "\.png",
-  "screenshots",
-  "special_features",
-  "srt",
-  "unsorted"
-])
-
-expr = "".join([
-  "^(.(?!(",
-  filters,
-  ")))*$"
-])
-
-regex = re.compile(expr)
-
-bindings = ",".join([
-  # "ctrl-b:page-up",
-  # "ctrl-d:page-down",
-  # "ctrl-f:page-down",
-  "ctrl-j:accept",
-  "ctrl-t:toggle-all",
-  # "ctrl-u:page-up"
-  # "ctrl-e:next-history",
-  # "ctrl-y:previous-history"
-])
-
-fzf_options = [
-  # "--ansi",
-  # "--black",
-  # "--color=bw",
-  "--bind=" + bindings,
-  "--inline-info",
-  "--no-hscroll",
-  "+s",
-  "--select-1",
-  "--prompt=",
-  "--tac",
-  "-i",
-  "-m",
-  "-x"
-]
-
-def get_episodes(shows, ask=True, sort="normal"):
-  episodes = []
-
-  if ask:
-    command = ["echo", "\n".join(shows)]
-    ps = subprocess.Popen(command, stdout=subprocess.PIPE)
-
-    try:
-      command = ["fzf" ] + fzf_options
-      output = subprocess.check_output(command, stdin=ps.stdout).decode()
-      ps.wait()
-
-      output = (output.split("\n"))
-      shows = list(filter(None, output))
-    except:
-      shows = []
-
-    if not shows:
-      return
-
-  for show in shows:
-    for dirname, dirnames, filenames in os.walk(show):
-      for filename in filenames:
-        episodes.append(os.path.join(dirname, filename))
-
-  episodes = list(set(filter(regex.match, episodes)))
-
-  if sort == "normal":
-    episodes.sort()
-  elif sort == "random":
-    random.shuffle(episodes)
-  # eps = [episode(ep) for ep in episodes]
-
-  return episodes
-
-def get_playlist(shows_path, ask=True, sort="normal"):
-  shows = get_shows(shows_path)
-  episodes = get_episodes(shows, ask, sort)
-  playlist = []
-
-  try:
-    temp_file = '/tmp/mpv_filenames'
-
-    with open(temp_file, "w") as file:
-      for filename in episodes:
-        file.write("%s\n" % filename)
-
-    command = ["cat", temp_file]
-    ps = subprocess.Popen(command, stdout=subprocess.PIPE)
-
-    command = ["fzf"] + fzf_options
-    output = subprocess.check_output(command, stdin=ps.stdout)
-    output = output.decode().split("\n")
-    playlist = list(filter(None, output))
-    ps.wait()
-    exit()
-  except:
-    pass
-
-  return playlist
-
-def get_shows(shows_path):
-  shows = []
-
-  for dirname, dirnames, filenames in os.walk(shows_path):
-    shows.append(os.path.join(dirname))
-
-    for subdirname in dirnames:
-      shows.append(os.path.join(dirname, subdirname))
-
-
-  shows = list(set(filter(regex.match, shows)))
-  shows.sort()
-
-  return shows
-
 def seed_playlist(shows_path, ask_shows=True, sort="normal"):
-  playlist = get_playlist(shows_path, ask_shows, sort)
+  files = playlist.get_playlist(shows_path, ask_shows, sort)
 
-  if not playlist:
+  if not files:
     return
 
   mpv.stop()
-  mpv.playlist_replace(playlist)
+  mpv.playlist_replace(files)
 
-  while mpv.path() not in playlist:
+  while mpv.path() not in files:
     time.sleep(0.1)
 
   mpv.unpause()
@@ -171,9 +44,9 @@ def episode(filename=mpv.path()):
   return basename(filename).split(".")[0]
 
 def watch_video():
-  playlist = mpv.playlist()
+  mpv_playlist = mpv.playlist()
 
-  if not playlist:
+  if not mpv_playlist:
     return
 
   ep = episode()
@@ -203,7 +76,7 @@ def watch_video():
 
     if pos > start and stop > length:
       # Range is here to end of video
-      last_file = playlist[-1]["filename"]
+      last_file = mpv_playlist[-1]["filename"]
       last_ep = episode(last_file)
 
       if last_ep == ep:
@@ -292,6 +165,4 @@ if __name__ == '__main__':
     else:
       if args.skip:
         watch_video()
-    # else:
-    #   break
 
