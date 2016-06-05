@@ -12,8 +12,12 @@ import sys
 
 import tmux
 import vim
+import x
 
 window_name = 'books'
+
+def set_rate(rate):
+  check_output(["redis-cli", "set", "reading_speed", str(rate)])
 
 def get_rate():
   return float(check_output(["redis-cli", "get", "reading_speed"]).decode())
@@ -25,77 +29,74 @@ def make_window():
   if socket.gethostname() == 'laptop':
     class_name = 'bigspacelaptop'
 
-  if not tmux.is_attached():
-    call(["wmctrl", "-s", str(desktop)])
-    call(["urxvtc", "-name", class_name, "-e", "zsh", "-ic", "books"])
-    call(["wmctrl", "-r", window_name, "-t", str(desktop)])
+  if not tmux.attached():
+    x.desktop(2)
+    x.term("books", class_name)
+    x.move(window_name, 2)
 
   call(["clear"])
 
-  while not tmux.is_attached():
+  while not tmux.attached():
     sleep(0.1)
 
-  call(["wmctrl", "-a", window_name])
-
-def active_window():
-  return check_output([
-      "xdotool",
-      "getactivewindow",
-      "getwindowname"
-  ]).decode().strip()
+  x.activate(window_name)
 
 def delay(seconds):
-  rate = get_rate()
-  wait = seconds * rate
+  wait = seconds * get_rate()
   sleep(wait)
 
 def sig_handler(signal, frame):
   sys.exit(0)
 
-def idle():
-  return int(check_output(["xprintidle"])) / 1000
+def read_word():
+  vim.key('<Esc>')
+  vim.key('w')
 
-if __name__ == '__main__':
+  word_len = len(vim.expr('expand("<cWORD>")'))
+
+  if word_len < 2:
+    delay(0.1)
+    return
+
+  if word_len > 7:
+    delay(0.135)
+  else:
+    delay(0.05)
+
+  vim.key('<Esc>')
+  vim.key('e')
+
+  if word_len > 7:
+    delay(0.135)
+  else:
+    delay(0.05)
+
+def read_book():
+  if x.idle() < 3 or x.active_window() != window_name:
+    sleep(1)
+    return
+
+  vim.center_display()
+  read_word()
+
+def main():
+  make_window()
+
+  while tmux.attached():
+    read_book()
+
+def parse_args():
   parser = argparse.ArgumentParser(description='Do stuff', prog='PROG', usage='%(prog)s [options]')
   parser.add_argument('--speed', type=float, help='Rate to do stuff')
-  args = parser.parse_args()
 
-  signal.signal(signal.SIGINT, sig_handler)
+  args = parser.parse_args()
 
   if args.speed and args.speed > 0:
     rate = 1 / args.speed
-    check_output(["redis-cli", "set", "reading_speed", str(rate)])
+    set_rate(rate)
 
-  make_window()
-
-  while tmux.is_attached():
-    if idle() < 3 or active_window() != window_name:
-      sleep(1)
-      continue
-
-    vim.key('<Esc>')
-    vim.key('zz')
-
-    delay(0.01)
-
-    vim.key('<Esc>')
-    vim.key('w')
-
-    word_len = len(vim.expr('expand("<cWORD>")'))
-
-    if word_len < 2:
-      delay(0.1)
-      continue
-    elif word_len > 7:
-      delay(0.135)
-    else:
-      delay(0.05)
-
-    vim.key('<Esc>')
-    vim.key('e')
-
-    if word_len > 7:
-      delay(0.135)
-    else:
-      delay(0.05)
+if __name__ == '__main__':
+  signal.signal(signal.SIGINT, sig_handler)
+  parse_args()
+  main()
 
