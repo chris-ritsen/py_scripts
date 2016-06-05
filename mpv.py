@@ -8,13 +8,11 @@ import time
 
 basename = os.path.basename
 
+def get_socket():
+  return subprocess.check_output(["redis-cli", "get", "socket"]).decode()
+
 def query(command):
   socket = get_socket()
-
-  # p1 = subprocess.Popen(["echo", json], stdout=subprocess.PIPE)
-  # p2 = subprocess.Popen(["socat", "-", socket], stdin=p1.stdout, stdout=subprocess.PIPE)
-  # value = p2.communicate()[0]
-  # p1.stdout.close()
 
   try:
     _json = json.dumps(command)
@@ -65,12 +63,6 @@ def set_property(_property, value):
 def paused():
   return get_property("pause")
 
-def get_path():
-  return get_property_string("path")
-
-def get_socket():
-  return subprocess.check_output(["redis-cli", "get", "socket"]).decode()
-
 def playlist_replace(files):
   temp_file = '/tmp/mpv_playlist'
 
@@ -88,7 +80,7 @@ def playlist_replace(files):
 
   return query(cmd)
 
-def stop_playback():
+def stop():
   cmd = {
     "command": [
       "stop",
@@ -96,7 +88,6 @@ def stop_playback():
   }
 
   return query(cmd)
-
 
 def playlist_next():
   cmd = {
@@ -107,82 +98,21 @@ def playlist_next():
 
   return query(cmd)
 
-
-def seed_playlist(playlist):
-  playlist_replace(playlist)
-
-  while get_property("path") not in playlist:
-    time.sleep(0.1)
-
-def episode():
-  filename = get_property("path")
-
-  if not filename:
-    return ""
-
-  return basename(filename).split(".")[0]
-
 def time_pos():
   return get_property("time-pos")
 
-if __name__ == '__main__':
-  playlist = [
-    # "/Media/Big/Videos/TV/star_trek/star_trek.next_generation.the/s02e06.mkv",
-    "/Media/Big/Videos/TV/star_trek/star_trek.next_generation.the/s02e07.mkv"
-  ]
+def playlist():
+  return get_property("playlist")
 
-  seed_playlist(playlist)
-  time.sleep(1)
-  mpv_playlist = get_property("playlist")
-
+def pause():
   set_property("pause", False)
 
-  episodes = {
-    "s02e06": {
-      "ranges": [
-        (196.6, 293.1),
-        (2678.5, float("inf"))
-      ]
-    },
-    "s02e07": {
-      "ranges": [
-        (140.52, 237.65),
-        (2663.3, float("inf"))
-      ]
-    }
-  }
+def unpause():
+  set_property("pause", False)
 
-  # TODO: Reimplement the property save/restore functionality
+def path():
+  return get_property_string("path")
 
-  while True:
-    mpv_playlist = get_property("playlist")
-
-    if not mpv_playlist:
-      continue
-
-    ep = episode()
-
-    if not ep or ep not in episodes:
-      time.sleep(0.01)
-      continue
-
-    pos = time_pos() or 0
-
-    if not "length" in episodes[ep]:
-      episodes[ep]["length"] = get_property("length")
-
-    length = episodes[ep]["length"]
-    ranges = episodes[ep]["ranges"]
-
-    for i, (a, b) in enumerate(ranges):
-      if pos > a and pos < b:
-        if pos > a and b >= length:
-          last = basename(mpv_playlist[-1]["filename"]).split(".")[0]
-
-          if last == ep:
-            stop_playback()
-          else:
-            playlist_next()
-        else:
-          set_property("time-pos", b)
+def length():
+  return get_property("length")
 
