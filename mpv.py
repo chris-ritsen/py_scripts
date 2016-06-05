@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 import json
 import os
@@ -16,7 +15,7 @@ def query(command):
 
   try:
     _json = json.dumps(command)
-    cmd = " ".join(["echo '", _json, "' | socat -", socket])
+    cmd = " ".join(["echo '", _json, "' | socat - 2> /dev/null", socket])
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 

@@ -3,6 +3,8 @@
 from pprint import pprint
 import argparse
 import os
+import random
+import re
 import signal
 import subprocess
 import sys
@@ -13,6 +15,38 @@ import playlist
 import tv
 
 basename = os.path.basename
+
+def sig_handler(signal, frame):
+  print(signal)
+  sys.exit(0)
+
+def slideshow(speed=1):
+
+  filters = "|".join([
+    "feh.*filelist",
+    "unsorted"
+  ])
+
+  expr = "".join([
+    "^(.(?!(",
+    filters,
+    ")))*$"
+  ])
+
+  regex = re.compile(expr)
+
+  photos = []
+  graphics_dir = "/Media/Big/Graphics/sorted/jpg"
+
+  for dirname, dirnames, filenames in os.walk(graphics_dir):
+    files = [os.path.join(dirname, filename) for filename in filenames]
+    photos = files
+
+  photos = list(set(filter(regex.match, photos)))
+  random.shuffle(photos)
+  mpv.playlist_replace(photos)
+  mpv.set_property("speed", speed)
+  mpv.unpause()
 
 def seed_playlist(shows_path, ask_shows=True, sort="normal"):
   files = playlist.get_playlist(shows_path, ask_shows, sort)
@@ -56,12 +90,14 @@ def watch_video():
     time.sleep(0.01)
     return
 
-  if not "length" in tv.shows[show_name][ep]:
-    tv.shows[show_name][ep]["length"] = mpv.length()
+  ep_info = tv.shows[show_name][ep]
 
-  length = tv.shows[show_name][ep]["length"]
+  if not "length" in ep_info:
+    ep_info["length"] = mpv.length()
+
+  length = ep_info["length"]
   pos = mpv.time_pos() or 0
-  ranges = tv.shows[show_name][ep]["ranges"]
+  ranges = ep_info["ranges"]
 
   for i, (start, stop) in enumerate(ranges):
     if pos < start or pos > stop:
@@ -84,7 +120,8 @@ def watch_video():
       else:
         mpv.playlist_next()
 
-def sig_handler(signal, frame):
+def aig_handler(signal, frame):
+  print(signal)
   sys.exit(0)
 
 def parse_args():
@@ -116,6 +153,30 @@ def parse_args():
       type=str
   )
 
+  parser.add_argument(
+      '--speed',
+      default=1.0,
+      help='Slideshow speed in seconds',
+      type=float)
+
+  parser.add_argument(
+      '--slideshow',
+      default=False,
+      action='store_true',
+      help='Photos slideshow')
+
+  parser.add_argument(
+      '--seed',
+      default=False,
+      action='store_true',
+      help='Seed playlist')
+
+  parser.add_argument(
+      '--skip',
+      default=False,
+      action='store_true',
+      help='Skip over boring sections of videos')
+
   group = parser.add_mutually_exclusive_group()
 
   group.add_argument(
@@ -123,18 +184,6 @@ def parse_args():
       default=True,
       action='store_true',
       help='Ask for shows from a list')
-
-  group.add_argument(
-      '--seed',
-      default=False,
-      action='store_true',
-      help='Seed playlist')
-
-  group.add_argument(
-      '--skip',
-      default=False,
-      action='store_true',
-      help='Skip over boring sections of videos')
 
   group.add_argument(
       '--no-ask-shows',
@@ -150,18 +199,26 @@ def parse_args():
   return args
 
 if __name__ == '__main__':
-  signal.signal(signal.SIGINT, sig_handler)
   args = parse_args()
 
+  ask = args.ask_shows and not args.no_ask_shows
+
   if args.seed:
-    seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
+    seed_playlist(args.dir, ask, args.sort)
+    mpv.set_property("speed", args.speed)
+
+  if args.slideshow:
+    slideshow(args.speed)
 
   if not args.skip and not args.loop:
     exit()
 
   while True:
+    time.sleep(0.01)
+    signal.signal(signal.SIGINT, sig_handler)
+
     if args.loop:
-      seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
+      seed_playlist(args.dir, ask, args.sort)
     else:
       if args.skip:
         watch_video()
