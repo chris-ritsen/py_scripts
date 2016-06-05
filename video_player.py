@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
 from pprint import pprint
+import argparse
 import json
 import os
+import random
 import re
 import signal
 import subprocess
@@ -36,8 +38,12 @@ expr = "".join([
 regex = re.compile(expr)
 
 bindings = ",".join([
+  # "ctrl-b:page-up",
+  # "ctrl-d:page-down",
+  # "ctrl-f:page-down",
+  "ctrl-j:accept",
   "ctrl-t:toggle-all",
-  "ctrl-j:accept"
+  # "ctrl-u:page-up"
   # "ctrl-e:next-history",
   # "ctrl-y:previous-history"
 ])
@@ -49,6 +55,7 @@ fzf_options = [
   "--bind=" + bindings,
   "--inline-info",
   "--no-hscroll",
+  "+s",
   "--select-1",
   "--prompt=",
   "--tac",
@@ -57,42 +64,54 @@ fzf_options = [
   "-x"
 ]
 
-def get_episodes():
-  shows = get_shows()
-
+def get_episodes(shows, ask=True, sort="normal"):
   episodes = []
-  command = ["echo", "\n".join(shows)]
-  ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-  try:
-    command = ["fzf" ] + fzf_options
-    output = subprocess.check_output(command, stdin=ps.stdout).decode()
-    ps.wait()
+  if ask:
+    command = ["echo", "\n".join(shows)]
+    ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-    output = (output.split("\n"))
-    shows = list(filter(None, output))
-  except:
-    exit()
+    try:
+      command = ["fzf" ] + fzf_options
+      output = subprocess.check_output(command, stdin=ps.stdout).decode()
+      ps.wait()
 
-  if not shows:
-    exit()
+      output = (output.split("\n"))
+      shows = list(filter(None, output))
+    except:
+      shows = []
+
+    if not shows:
+      return
 
   for show in shows:
     for dirname, dirnames, filenames in os.walk(show):
       for filename in filenames:
         episodes.append(os.path.join(dirname, filename))
 
-  episodes = list(filter(regex.match, episodes))
+  episodes = list(set(filter(regex.match, episodes)))
+
+  if sort == "normal":
+    episodes.sort()
+  elif sort == "random":
+    random.shuffle(episodes)
   # eps = [episode(ep) for ep in episodes]
 
   return episodes
 
-def get_playlist():
-  episodes = get_episodes()
+def get_playlist(shows_path, ask=True, sort="normal"):
+  shows = get_shows(shows_path)
+  episodes = get_episodes(shows, ask, sort)
   playlist = []
 
   try:
-    command = ["echo", "\n".join(episodes)]
+    temp_file = '/tmp/mpv_filenames'
+
+    with open(temp_file, "w") as file:
+      for filename in episodes:
+        file.write("%s\n" % filename)
+
+    command = ["cat", temp_file]
     ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
     command = ["fzf"] + fzf_options
@@ -100,25 +119,29 @@ def get_playlist():
     output = output.decode().split("\n")
     playlist = list(filter(None, output))
     ps.wait()
+    exit()
   except:
-    return playlist
+    pass
 
   return playlist
 
-def get_shows():
+def get_shows(shows_path):
   shows = []
 
-  for dirname, dirnames, filenames in os.walk('/Media/Videos/TV'):
+  for dirname, dirnames, filenames in os.walk(shows_path):
+    shows.append(os.path.join(dirname))
+
     for subdirname in dirnames:
       shows.append(os.path.join(dirname, subdirname))
 
 
-  shows = list(filter(regex.match, shows))
+  shows = list(set(filter(regex.match, shows)))
+  shows.sort()
 
   return shows
 
-def seed_playlist():
-  playlist = get_playlist()
+def seed_playlist(shows_path, ask_shows=True, sort="normal"):
+  playlist = get_playlist(shows_path, ask_shows, sort)
 
   if not playlist:
     return
@@ -130,6 +153,14 @@ def seed_playlist():
     time.sleep(0.1)
 
   mpv.unpause()
+
+def get_current_dir():
+  filename=mpv.path()
+
+  if not filename:
+    return ""
+
+  return basename(os.path.dirname(filename))
 
 def episode(filename=mpv.path()):
 
@@ -145,17 +176,18 @@ def watch_video():
     return
 
   ep = episode()
+  show_name = get_current_dir()
 
-  if not ep or ep not in tv.episodes:
+  if not show_name or not ep or ep == '' or ep not in tv.shows[show_name]:
     time.sleep(0.01)
     return
 
-  if not "length" in tv.episodes[ep]:
-    tv.episodes[ep]["length"] = mpv.length()
+  if not "length" in tv.shows[show_name][ep]:
+    tv.shows[show_name][ep]["length"] = mpv.length()
 
-  length = tv.episodes[ep]["length"]
+  length = tv.shows[show_name][ep]["length"]
   pos = mpv.time_pos() or 0
-  ranges = tv.episodes[ep]["ranges"]
+  ranges = tv.shows[show_name][ep]["ranges"]
 
   for i, (start, stop) in enumerate(ranges):
     if pos < start or pos > stop:
@@ -165,6 +197,7 @@ def watch_video():
     if pos > start and pos < stop and stop < length:
       # Current position is within range; skip ahead
       mpv.set_property("time-pos", stop)
+      time.sleep(0.1)
       continue
 
     if pos > start and stop > length:
@@ -180,11 +213,73 @@ def watch_video():
 def sig_handler(signal, frame):
   sys.exit(0)
 
+def parse_args():
+  parser = argparse.ArgumentParser(
+      description='Do stuff',
+      prog='video_player.py',
+      usage='%(prog)s [options]',
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+  parser.add_argument(
+      '-d',
+      '--dir',
+      type=str,
+      default="/Media/Videos",
+      help='Directory to check for files.')
+
+  parser.add_argument(
+      "--loop",
+      action='store_true',
+      default=False,
+      help='Keep asking for videos to play'
+  )
+
+  parser.add_argument(
+      "--sort",
+      choices=["normal", "random", "reverse"],
+      default="normal",
+      help='Sort order',
+      type=str
+  )
+
+  group = parser.add_mutually_exclusive_group()
+
+  group.add_argument(
+      '--ask-shows',
+      default=True,
+      action='store_true',
+      help='Ask for shows from a list')
+
+  group.add_argument(
+      '--seed',
+      default=False,
+      action='store_true',
+      help='Seed playlist')
+
+  group.add_argument(
+      '--no-ask-shows',
+      default=False,
+      action='store_true',
+      help='Show all files in one list')
+
+  args = parser.parse_args()
+
+  if args.no_ask_shows:
+    args.ask_shows = False
+
+  return args
+
 if __name__ == '__main__':
   signal.signal(signal.SIGINT, sig_handler)
+  args = parse_args()
 
-  seed_playlist()
+  if args.seed:
+    seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
 
-  # while True:
-  #   watch_video()
+  while True:
+    # if args.loop:
+    #   seed_playlist(args.dir, args.ask_shows and not args.no_ask_shows, args.sort)
+    # else:
+    #   break
+    watch_video()
 
