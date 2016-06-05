@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
 import json
+import os
 import pprint
 import subprocess
 import time
+
+basename = os.path.basename
 
 def query(command):
   socket = get_socket()
@@ -26,7 +29,6 @@ def query(command):
 
     return value
   except:
-    # pprint.pprint(command)
     return
 
 def get_property_string(_property):
@@ -112,6 +114,13 @@ def seed_playlist(playlist):
   while get_property("path") not in playlist:
     time.sleep(0.1)
 
+def episode():
+  filename = get_property("path")
+  return basename(filename).split(".")[0]
+
+def time_pos():
+  return get_property("time-pos")
+
 if __name__ == '__main__':
   playlist = [
     # "/Media/Big/Videos/TV/star_trek/star_trek.next_generation.the/s02e06.mkv",
@@ -119,53 +128,57 @@ if __name__ == '__main__':
   ]
 
   seed_playlist(playlist)
+  time.sleep(1)
+  mpv_playlist = get_property("playlist")
 
-  # set_property("time-pos", 193)
-  # print(get_property("time-pos"))
   set_property("pause", False)
 
-  # TODO: Check if time-pos is in a range and skip to end (or next video)
-  # Filename, start, stop
-  # If only a start is given, then match anywhere to the end of the file
-  # get_property("length")
-
-  ranges = {
-    "s02e06": [
-      (196.6, 293.1),        # skip intro after cold-open
-      (2678.5, float("inf")) # skip credits
-    ],
-    "s02e07": [
-      (140.52, 237.5),
-      (2663.45, float("inf"))
-    ]
+  episodes = {
+    "s02e06": {
+      "ranges": [
+        (196.6, 293.1),
+        (2678.5, float("inf"))
+      ]
+    },
+    "s02e07": {
+      "ranges": [
+        (140.52, 237.5),
+        (2663.45, float("inf"))
+      ]
+    }
   }
 
   # TODO: Reimplement the property save/restore functionality
 
-  while (get_property("path") == "/Media/Big/Videos/TV/star_trek/star_trek.next_generation.the/s02e06.mkv"):
-    time.sleep(0.01)
-    time_pos = get_property("time-pos") or 0
+  while True:
+    mpv_playlist = get_property("playlist")
 
-    if time_pos > 196.6 and time_pos < 293.1:
-      set_property("time-pos", 293.1)
+    if not mpv_playlist:
+      break
 
-    if time_pos > 2678.5:
-      playlist_next()
+    ep = episode()
 
-      while get_property("path") != playlist[1]:
-        time.sleep(1)
+    if not ep or ep not in episodes:
+      time.sleep(0.01)
+      continue
 
-  while (get_property("path") == "/Media/Big/Videos/TV/star_trek/star_trek.next_generation.the/s02e07.mkv"):
-    time.sleep(0.01)
-    time_pos = get_property("time-pos") or 0
+    pos = time_pos() or 0
 
-    if time_pos > 140.52 and time_pos < 237.5:
-      set_property("time-pos", 237.5)
+    if not "length" in episodes[ep]:
+      episodes[ep]["length"] = get_property("length")
 
-    if time_pos > 2663.45:
-      stop_playback()
+    length = episodes[ep]["length"]
+    ranges = episodes[ep]["ranges"]
 
-  # print(get_property("time-pos"))
-  # print(paused(), path())
-  # pprint.pprint(get_property("playlist"))
+    for i, (a, b) in enumerate(ranges):
+      if pos > a and pos < b:
+        if pos > a and b >= length:
+          last = basename(mpv_playlist[-1]["filename"]).split(".")[0]
+
+          if last == ep:
+            stop_playback()
+          else:
+            playlist_next()
+        else:
+          set_property("time-pos", b)
 
