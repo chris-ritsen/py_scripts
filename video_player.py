@@ -221,6 +221,8 @@ if __name__ == '__main__':
   if not args.skip and not args.loop:
     exit()
 
+  subprocess.call(["clear"])
+
   while True:
     time.sleep(0.01)
     signal.signal(signal.SIGINT, sig_handler)
