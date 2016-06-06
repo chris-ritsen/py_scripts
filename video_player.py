@@ -86,8 +86,11 @@ def watch_video():
   ep = episode(mpv.path())
   show_name = get_current_dir()
 
-  if not show_name or not ep or ep == '' or ep not in tv.shows[show_name]:
-    time.sleep(0.01)
+  try:
+    if not show_name or not ep or ep == '' or ep not in tv.shows[show_name]:
+      time.sleep(0.01)
+      return
+  except:
     return
 
   ep_info = tv.shows[show_name][ep]
@@ -130,7 +133,6 @@ def aig_handler(signal, frame):
 def parse_args():
   parser = argparse.ArgumentParser(
       description='Load files into mpv for playback',
-      prog='video_player.py',
       usage='%(prog)s [options]',
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -199,6 +201,10 @@ def parse_args():
       action='store_true',
       help='Show all files in one list')
 
+  if len(sys.argv) == 1:
+    parser.print_help()
+    sys.exit()
+
   args = parser.parse_args()
 
   if args.no_ask_shows:
@@ -208,6 +214,8 @@ def parse_args():
 
 if __name__ == '__main__':
   args = parse_args()
+
+  # print(vars(args))
 
   ask = args.ask_shows and not args.no_ask_shows
 
