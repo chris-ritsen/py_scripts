@@ -70,7 +70,7 @@ def get_current_dir():
 
   return basename(os.path.dirname(filename))
 
-def episode(filename=mpv.path()):
+def episode(filename=''):
 
   if not filename:
     return ""
@@ -83,7 +83,7 @@ def watch_video():
   if not mpv_playlist:
     return
 
-  ep = episode()
+  ep = episode(mpv.path())
   show_name = get_current_dir()
 
   if not show_name or not ep or ep == '' or ep not in tv.shows[show_name]:
@@ -98,6 +98,9 @@ def watch_video():
   length = ep_info["length"]
   pos = mpv.time_pos() or 0
   ranges = ep_info["ranges"]
+
+  if mpv.get_property("pause"):
+    return
 
   for i, (start, stop) in enumerate(ranges):
     if pos < start or pos > stop:
