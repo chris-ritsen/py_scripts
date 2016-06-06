@@ -48,8 +48,8 @@ def slideshow(speed=1):
   mpv.set_property("speed", speed)
   mpv.unpause()
 
-def seed_playlist(shows_path, ask_shows=True, sort="normal"):
-  files = playlist.get_playlist(shows_path, ask_shows, sort)
+def seed_playlist(shows_path, ask_shows=True, sort="normal", query=''):
+  files = playlist.get_playlist(shows_path, ask_shows, sort, query)
 
   if not files:
     return
@@ -154,6 +154,11 @@ def parse_args():
   )
 
   parser.add_argument(
+      '--query',
+      help='Initial filter for directory search',
+      type=str)
+
+  parser.add_argument(
       '--speed',
       default=1.0,
       help='Slideshow speed in seconds',
@@ -204,7 +209,7 @@ if __name__ == '__main__':
   ask = args.ask_shows and not args.no_ask_shows
 
   if args.seed:
-    seed_playlist(args.dir, ask, args.sort)
+    seed_playlist(args.dir, ask, args.sort, args.query)
     mpv.set_property("speed", args.speed)
 
   if args.slideshow:
@@ -218,7 +223,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, sig_handler)
 
     if args.loop:
-      seed_playlist(args.dir, ask, args.sort)
+      seed_playlist(args.dir, ask, args.sort, args.query)
     else:
       if args.skip:
         watch_video()

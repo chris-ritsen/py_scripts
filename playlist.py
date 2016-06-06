@@ -54,7 +54,7 @@ expr = "".join([
 
 regex = re.compile(expr)
 
-def get_episodes(shows, ask=True, sort="normal"):
+def get_episodes(shows, ask=True, sort="normal", query=''):
   episodes = []
 
   if ask:
@@ -70,6 +70,10 @@ def get_episodes(shows, ask=True, sort="normal"):
 
     try:
       command = ["fzf" ] + fzf_options
+
+      if query:
+        command += ["--query='" + query]
+
       output = subprocess.check_output(command, stdin=ps.stdout).decode()
       ps.wait()
 
@@ -96,9 +100,9 @@ def get_episodes(shows, ask=True, sort="normal"):
 
   return episodes
 
-def get_playlist(shows_path, ask=True, sort="normal"):
+def get_playlist(shows_path, ask=True, sort="normal", query=''):
   shows = get_shows(shows_path)
-  episodes = get_episodes(shows, ask, sort)
+  episodes = get_episodes(shows, ask, sort, query)
   playlist = []
 
   try:
@@ -112,6 +116,10 @@ def get_playlist(shows_path, ask=True, sort="normal"):
     ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
     command = ["fzf"] + fzf_options
+
+    if not ask and query:
+      command += ["--query='" + query + " "]
+
     output = subprocess.check_output(command, stdin=ps.stdout)
     output = output.decode().split("\n")
     playlist = list(set(filter(None, output)))
