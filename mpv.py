@@ -86,8 +86,15 @@ def query(command):
 
   try:
     _json = json.dumps({"command": command})
-    cmd = " ".join(["echo '", _json, "' | socat -", socket, "2> /dev/null"])
-    print(cmd)
+
+    cmd = " ".join([
+      "echo '",
+      _json,
+      "' | socat -",
+      socket,
+      "2> /dev/null"
+    ])
+
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
