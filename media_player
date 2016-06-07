@@ -48,8 +48,8 @@ def slideshow(speed=1):
   mpv.set_property("speed", speed)
   mpv.player.unpause()
 
-def seed_playlist(shows_path, ask_shows=True, sort="normal", query=''):
-  files = playlist.get_playlist(shows_path, ask_shows, sort, query)
+def seed_playlist(shows_path, ask=True, sort="normal", query=''):
+  files = playlist.get_playlist(shows_path, ask, sort, query)
 
   if not files:
     return
@@ -235,15 +235,15 @@ def parse_args():
 
   args = parser.parse_args()
 
-  if args.no_ask_shows:
-    args.ask_shows = False
+  if args.no_ask:
+    args.ask = False
 
   return args
 
 if __name__ == '__main__':
   args = parse_args()
 
-  ask = args.ask_shows and not args.no_ask_shows
+  ask = args.ask and not args.no_ask
 
   mpv.player.socket = args.socket
 
