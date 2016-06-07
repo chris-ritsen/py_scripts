@@ -54,11 +54,10 @@ def seed_playlist(shows_path, ask_shows=True, sort="normal", query=''):
   if not files:
     return
 
-  mpv.stop()
   mpv.playlist_replace(files)
 
-  while mpv.path() not in files:
-    time.sleep(0.1)
+  # while mpv.path() not in files:
+  #   time.sleep(0.1)
 
   mpv.unpause()
 
@@ -215,8 +214,6 @@ def parse_args():
 if __name__ == '__main__':
   args = parse_args()
 
-  # print(vars(args))
-
   ask = args.ask_shows and not args.no_ask_shows
 
   if args.seed:
@@ -232,6 +229,7 @@ if __name__ == '__main__':
   subprocess.call(["clear"])
 
   while True:
+    # TODO: watch redis pub/sub for events instead of querying mpv directly
     time.sleep(0.01)
     signal.signal(signal.SIGINT, sig_handler)
 

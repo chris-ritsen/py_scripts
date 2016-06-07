@@ -8,14 +8,14 @@ import time
 basename = os.path.basename
 
 def get_socket():
-  return subprocess.check_output(["redis-cli", "get", "socket"]).decode()
+  return subprocess.check_output(["redis-cli", "get", "socket"]).decode().strip()
 
 def query(command):
   socket = get_socket()
 
   try:
     _json = json.dumps(command)
-    cmd = " ".join(["echo '", _json, "' | socat - 2> /dev/null", socket])
+    cmd = " ".join(["echo '", _json, "' | socat -", socket, "2> /dev/null"])
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
@@ -77,6 +77,7 @@ def playlist_replace(files):
     ]
   }
 
+  print(cmd)
   return query(cmd)
 
 def stop():
