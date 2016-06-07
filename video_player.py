@@ -5,6 +5,7 @@ import argparse
 import os
 import random
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -45,7 +46,7 @@ def slideshow(speed=1):
   random.shuffle(photos)
   mpv.playlist_replace(photos)
   mpv.set_property("speed", speed)
-  mpv.unpause()
+  mpv.player.unpause()
 
 def seed_playlist(shows_path, ask_shows=True, sort="normal", query=''):
   files = playlist.get_playlist(shows_path, ask_shows, sort, query)
@@ -58,7 +59,7 @@ def seed_playlist(shows_path, ask_shows=True, sort="normal", query=''):
   # while mpv.path() not in files:
   #   time.sleep(0.1)
 
-  mpv.unpause()
+  mpv.player.unpause()
 
 def get_current_dir():
   filename=mpv.path()
@@ -205,6 +206,12 @@ def parse_args():
   group = parser.add_mutually_exclusive_group()
 
   group.add_argument(
+      '--prop',
+      help='Get a property from mpv',
+      type=str
+  )
+
+  group.add_argument(
       '--ask-shows',
       default=True,
       action='store_true',
@@ -232,11 +239,18 @@ if __name__ == '__main__':
 
   ask = args.ask_shows and not args.no_ask_shows
 
-  mpv.set_socket(args.socket)
+  mpv.player.socket = args.socket
 
-  if args.daemon and args.socket:
-    mpv.player_go(args.merge)
+  if args.prop:
+    print(mpv.get_property(args.prop))
     exit()
+
+  if args.daemon:
+    # TODO: Set a flag to build the playlist with edl://file.mkv;file2.mkv
+    mpv.player.start(args.merge)
+
+  mpv.run("redis-cli set pause 'pause: ${pause}'")
+  exit()
 
   if args.seed:
     seed_playlist(args.dir, ask, args.sort, args.query)

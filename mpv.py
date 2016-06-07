@@ -2,33 +2,70 @@
 import json
 import os
 import pprint
+import shlex
 import subprocess
 import time
 
 import redis
 
-basename = os.path.basename
-
 class Player(object):
   def __init__(self):
     self.socket = None
 
-# _socket = subprocess.check_output(["redis-cli", "get", "socket"]).decode().strip()
+  def pause(self):
+    set_property("pause", True)
+
+  def unpause(self):
+    set_property("pause", False)
+
+  def start(self, merge=False):
+
+    # TODO: Restart player automatically in an attempt to keep playing from the
+    # same position.  This would help in cases where the player window is closed
+    # or the system restarts.
+
+    # r = redis.StrictRedis(host='localhost', port=6379, db=0)
+    # started = r.get("started").decode().lower() == 'true'
+
+    # if not started:
+    #   return
+
+    socket = self.socket
+
+    command = [
+      "mpv",
+      "--input-unix-socket=" + socket,
+      "--softvol-max=200",
+      "--no-resume-playback",
+      "--force-window=yes",
+      "--keep-open=yes",
+      "--idle=yes",
+    ]
+
+    if merge:
+      command.append("--merge-files")
+
+    shell = os.environ["SHELL"]
+
+    if not get_property('mpv-version'):
+      os.makedirs(os.path.dirname(socket), 0x777, True)
+      subprocess.Popen(command)
+      print("Started mpv with socket", socket)
+    else:
+      print("Error: server already active with socket", socket)
 
 player = Player()
 
-def set_socket(socket):
-  player.socket = socket
-
-def query(command):
+def query_raw(command):
   socket = player.socket
 
   if not socket:
     return
 
   try:
-    _json = json.dumps(command)
-    cmd = " ".join(["echo '", _json, "' | socat -", socket, "2> /dev/null"])
+    command = shlex.quote(command)
+    cmd = " ".join(['echo', command, " | socat -", socket, "2> /dev/null"])
+    print(cmd)
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
@@ -41,36 +78,48 @@ def query(command):
   except:
     return
 
-def get_property_string(_property):
-  cmd = {
-    "command": [
-      "get_property_string",
-      _property
-    ]
-  }
+def query(command):
+  socket = player.socket
 
-  return query(cmd)
+  if not socket:
+    return
+
+  try:
+    _json = json.dumps({"command": command})
+    cmd = " ".join(["echo '", _json, "' | socat -", socket, "2> /dev/null"])
+    print(cmd)
+    output = subprocess.check_output(cmd, shell=True)
+    value = json.loads(output.decode())
+
+    if "data" not in value:
+      return
+
+    value = value["data"]
+
+    return value
+  except:
+    return
+
+def show_text(text):
+  query(["show-text", text])
+
+def run(command):
+  if type(command) == type(""):
+    command = [command]
+
+  shell = os.environ["SHELL"]
+  command = shell + ' -c "{}"'.format(";".join(command))
+
+  return query_raw("run " + command)
+
+def get_property_string(_property):
+  return query(["get_property_string", _property])
 
 def get_property(_property):
-  cmd = {
-    "command": [
-      "get_property",
-      _property
-    ]
-  }
-
-  return query(cmd)
+  return query(["get_property", _property])
 
 def set_property(_property, value):
-  cmd = {
-    "command": [
-      "set_property",
-      _property,
-      value
-    ]
-  }
-
-  return query(cmd)
+  query(["set_property", _property, value])
 
 def paused():
   return get_property("pause")
@@ -82,33 +131,19 @@ def playlist_replace(files):
     for filename in files:
       file.write("%s\n" % filename)
 
-  cmd = {
-    "command": [
-      "loadlist",
-      temp_file,
-      "replace"
-    ]
-  }
+  cmd = [
+    "loadlist",
+    temp_file,
+    "replace"
+  ]
 
   return query(cmd)
 
 def stop():
-  cmd = {
-    "command": [
-      "stop",
-    ]
-  }
-
-  return query(cmd)
+  query(["stop"])
 
 def playlist_next():
-  cmd = {
-    "command": [
-      "playlist_next",
-    ]
-  }
-
-  return query(cmd)
+  query(["playlist_next"])
 
 def time_pos():
   return get_property("time-pos")
@@ -116,51 +151,9 @@ def time_pos():
 def playlist():
   return get_property("playlist")
 
-def pause():
-  set_property("pause", False)
-
-def unpause():
-  set_property("pause", False)
-
 def path():
   return get_property_string("path")
 
 def length():
   return get_property("length")
-
-def player_go(merge=False):
-  
-  # TODO: Restart player automatically in an attempt to keep playing from the
-  # same position.  This would help in cases where the player window is closed
-  # or the system restarts.
-
-  # r = redis.StrictRedis(host='localhost', port=6379, db=0)
-  # started = r.get("started").decode().lower() == 'true'
-
-  # if not started:
-  #   return
-
-  socket = player.socket
-
-  command = [
-    "mpv",
-    "--input-unix-socket=" + socket,
-    "--softvol-max=200",
-    "--no-resume-playback",
-    "--force-window=yes",
-    "--keep-open=yes",
-    "--idle=yes",
-  ]
-
-  if merge:
-    command.append("--merge-files")
-
-  shell = os.environ["SHELL"]
-
-  if not get_property('mpv-version'):
-    os.makedirs(os.path.dirname(socket), 0x777, True)
-    subprocess.Popen(command)
-    print("Started mpv with socket", socket)
-  else:
-    print("Error: server already active with socket", socket)
 
