@@ -279,5 +279,6 @@ if __name__ == '__main__':
       seed_playlist(args.dir, ask, args.sort, args.query)
     else:
       if args.skip:
+        # TODO: Skip should know about merge
         watch_video()
 

@@ -1,6 +1,9 @@
 
 # TODO: This should be serialised instead, or stored in redis.
 
+# TODO: Check playlist for merged files.  Sum lengths of files and add the
+# offset to the range.
+
 # There needs to be an easier way of entering these times.  I'm not requiring
 # accuracy here; on a first-pass I just want to skip sections that are a
 # minute or more of nothing, such as intros and credits.
