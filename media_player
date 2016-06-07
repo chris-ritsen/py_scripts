@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 from pprint import pprint
 import argparse
@@ -36,7 +36,11 @@ def slideshow(speed=1):
   regex = re.compile(expr)
 
   photos = []
-  graphics_dir = os.environ["XDG_PICTURES_DIR"]
+
+  if "XDG_PICTURES_DIR" in os.environ:
+    graphics_dir = os.environ["XDG_PICTURES_DIR"]
+  else:
+    graphics_dir = os.getcwd()
 
   for dirname, dirnames, filenames in os.walk(graphics_dir):
     files = [os.path.join(dirname, filename) for filename in filenames]
@@ -131,11 +135,16 @@ def parse_args():
       usage='%(prog)s [options]',
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+  if "XDG_VIDEOS_DIR" in os.environ:
+    video_dir = os.environ["XDG_VIDEOS_DIR"]
+  else:
+    video_dir = os.getcwd()
+
   parser.add_argument(
       '-d',
       '--dir',
       type=str,
-      default=os.environ["XDG_VIDEOS_DIR"],
+      default=video_dir,
       help='Directory to check for files.')
 
   parser.add_argument(
