@@ -264,7 +264,11 @@ if __name__ == '__main__':
   mpv.player.socket = args.socket
 
   if args.prop:
-    print(mpv.get_property(args.prop))
+    if len(args.prop.split("=")) == 2:
+      prop, value = args.prop.split("=")
+      print(mpv.set_property(prop, value))
+    else:
+      print(mpv.get_property(args.prop))
     exit()
 
   if args.daemon:
