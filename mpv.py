@@ -46,7 +46,8 @@ class Player(object):
     shell = os.environ["SHELL"]
 
     if not get_property('mpv-version'):
-      os.makedirs(os.path.dirname(socket), 0x777, True)
+      os.makedirs(os.path.dirname(socket), 0x755, True)
+      # TODO: Check that the directory is actually usable
       subprocess.Popen(command)
       print("Started mpv with socket", socket)
     else:
