@@ -93,6 +93,8 @@ def query(command):
       "2> /dev/null"
     ])
 
+    print(cmd)
+
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
@@ -124,7 +126,10 @@ def get_property(_property):
   return query(["get_property", _property])
 
 def set_property(_property, value):
-  query(["set_property", _property, value])
+  query(["set_property", _property, str(value)])
+
+def set_property_string(_property, value):
+  query(["set_property_string", _property, value])
 
 def paused():
   return get_property("pause")

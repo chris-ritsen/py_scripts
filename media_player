@@ -266,7 +266,8 @@ if __name__ == '__main__':
   if args.prop:
     if len(args.prop.split("=")) == 2:
       prop, value = args.prop.split("=")
-      print(mpv.set_property(prop, value))
+      print(prop, value)
+      mpv.set_property_string(prop, value)
     else:
       print(mpv.get_property(args.prop))
     exit()
