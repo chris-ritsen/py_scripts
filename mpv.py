@@ -13,21 +13,15 @@ class Player(object):
   def __init__(self):
     self.socket = None
 
-  def set_socket(self, socket):
-    self.socket = socket
-
-  def get_socket(self):
-    return self.socket
-
 # _socket = subprocess.check_output(["redis-cli", "get", "socket"]).decode().strip()
 
 player = Player()
 
 def set_socket(socket):
-  player.set_socket(socket)
+  player.socket = socket
 
 def query(command):
-  socket = player.get_socket()
+  socket = player.socket
 
   if not socket:
     return
@@ -146,9 +140,11 @@ def player_go(merge=False):
   # if not started:
   #   return
 
+  socket = player.socket
+
   command = [
     "mpv",
-    "--input-unix-socket=" + player.get_socket(),
+    "--input-unix-socket=" + socket,
     "--softvol-max=200",
     "--no-resume-playback",
     "--force-window=yes",
@@ -162,6 +158,9 @@ def player_go(merge=False):
   shell = os.environ["SHELL"]
 
   if not get_property('mpv-version'):
-    os.makedirs(os.environ["XDG_RUNTIME_DIR"] + '/mpv')
-    subprocess.call(command)
+    os.makedirs(os.path.dirname(socket), 0x777, True)
+    subprocess.Popen(command)
+    print("Started mpv with socket", socket)
+  else:
+    print("Error: server already active with socket", socket)
 
