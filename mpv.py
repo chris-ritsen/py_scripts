@@ -63,7 +63,6 @@ def query_raw(command):
   try:
     command = shlex.quote(command)
     cmd = " ".join(['echo', command, " | socat -", socket, "2> /dev/null"])
-    print(cmd)
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
@@ -161,4 +160,7 @@ def path():
 
 def length():
   return get_property("length")
+
+def shuffle():
+  query(["playlist-shuffle"])
 

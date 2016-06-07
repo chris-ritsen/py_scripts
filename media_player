@@ -162,6 +162,13 @@ def parse_args():
   )
 
   parser.add_argument(
+      "--shuffle",
+      action='store_true',
+      default=False,
+      help='Shuffle current playlist'
+  )
+
+  parser.add_argument(
       "--merge",
       action='store_true',
       default=False,
@@ -268,9 +275,11 @@ if __name__ == '__main__':
     mpv.stop()
 
   if args.seed:
-    print(args.dir)
     seed_playlist(args.dir, ask, args.sort, args.query)
     mpv.set_property("speed", args.speed)
+
+  if args.shuffle:
+    mpv.shuffle()
 
   if args.slideshow:
     slideshow(args.speed)
