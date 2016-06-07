@@ -17,7 +17,6 @@ import tv
 basename = os.path.basename
 
 def sig_handler(signal, frame):
-  print(signal)
   sys.exit(0)
 
 def slideshow(speed=1):
@@ -125,10 +124,6 @@ def watch_video():
       else:
         mpv.playlist_next()
 
-def aig_handler(signal, frame):
-  print(signal)
-  sys.exit(0)
-
 def parse_args():
   parser = argparse.ArgumentParser(
       description='Load files into mpv for playback',
@@ -147,6 +142,27 @@ def parse_args():
       action='store_true',
       default=False,
       help='Keep asking for videos to play'
+  )
+
+  parser.add_argument(
+      "--daemon",
+      action='store_true',
+      default=False,
+      help='Run mpv'
+  )
+
+  parser.add_argument(
+      "--merge",
+      action='store_true',
+      default=False,
+      help='Act like everything in the playlist is one big file'
+  )
+
+  parser.add_argument(
+      "--socket",
+      default=os.environ["XDG_RUNTIME_DIR"] + '/mpv/video',
+      help='Socket for mpv',
+      type=str
   )
 
   parser.add_argument(
@@ -215,6 +231,12 @@ if __name__ == '__main__':
   args = parse_args()
 
   ask = args.ask_shows and not args.no_ask_shows
+
+  mpv.set_socket(args.socket)
+
+  if args.daemon and args.socket:
+    mpv.player_go(args.merge)
+    exit()
 
   if args.seed:
     seed_playlist(args.dir, ask, args.sort, args.query)

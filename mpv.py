@@ -5,13 +5,32 @@ import pprint
 import subprocess
 import time
 
+import redis
+
 basename = os.path.basename
 
-def get_socket():
-  return subprocess.check_output(["redis-cli", "get", "socket"]).decode().strip()
+class Player(object):
+  def __init__(self):
+    self.socket = None
+
+  def set_socket(self, socket):
+    self.socket = socket
+
+  def get_socket(self):
+    return self.socket
+
+# _socket = subprocess.check_output(["redis-cli", "get", "socket"]).decode().strip()
+
+player = Player()
+
+def set_socket(socket):
+  player.set_socket(socket)
 
 def query(command):
-  socket = get_socket()
+  socket = player.get_socket()
+
+  if not socket:
+    return
 
   try:
     _json = json.dumps(command)
@@ -77,7 +96,6 @@ def playlist_replace(files):
     ]
   }
 
-  print(cmd)
   return query(cmd)
 
 def stop():
@@ -115,4 +133,35 @@ def path():
 
 def length():
   return get_property("length")
+
+def player_go(merge=False):
+  
+  # TODO: Restart player automatically in an attempt to keep playing from the
+  # same position.  This would help in cases where the player window is closed
+  # or the system restarts.
+
+  # r = redis.StrictRedis(host='localhost', port=6379, db=0)
+  # started = r.get("started").decode().lower() == 'true'
+
+  # if not started:
+  #   return
+
+  command = [
+    "mpv",
+    "--input-unix-socket=" + player.get_socket(),
+    "--softvol-max=200",
+    "--no-resume-playback",
+    "--force-window=yes",
+    "--keep-open=yes",
+    "--idle=yes",
+  ]
+
+  if merge:
+    command.append("--merge-files")
+
+  shell = os.environ["SHELL"]
+
+  if not get_property('mpv-version'):
+    os.makedirs(os.environ["XDG_RUNTIME_DIR"] + '/mpv')
+    subprocess.call(command)
 
