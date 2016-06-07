@@ -36,7 +36,7 @@ def slideshow(speed=1):
   regex = re.compile(expr)
 
   photos = []
-  graphics_dir = "/Media/Big/Graphics/sorted/jpg"
+  graphics_dir = os.environ["XDG_PICTURES_DIR"]
 
   for dirname, dirnames, filenames in os.walk(graphics_dir):
     files = [os.path.join(dirname, filename) for filename in filenames]
@@ -135,7 +135,7 @@ def parse_args():
       '-d',
       '--dir',
       type=str,
-      default="/Media/Videos",
+      default=os.environ["XDG_VIDEOS_DIR"],
       help='Directory to check for files.')
 
   parser.add_argument(
@@ -198,18 +198,24 @@ def parse_args():
       help='Seed playlist')
 
   parser.add_argument(
+      '--stop',
+      default=False,
+      action='store_true',
+      help='Stop playback and clear the playlist')
+
+  parser.add_argument(
       '--skip',
       default=False,
       action='store_true',
       help='Skip over boring sections of videos')
 
-  group = parser.add_mutually_exclusive_group()
-
-  group.add_argument(
+  parser.add_argument(
       '--prop',
       help='Get a property from mpv',
       type=str
   )
+
+  group = parser.add_mutually_exclusive_group()
 
   group.add_argument(
       '--ask-shows',
@@ -249,8 +255,8 @@ if __name__ == '__main__':
     # TODO: Set a flag to build the playlist with edl://file.mkv;file2.mkv
     mpv.player.start(args.merge)
 
-  mpv.run("redis-cli set pause 'pause: ${pause}'")
-  exit()
+  if args.stop:
+    mpv.stop()
 
   if args.seed:
     seed_playlist(args.dir, ask, args.sort, args.query)
