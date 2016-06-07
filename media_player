@@ -149,7 +149,7 @@ def parse_args():
       "--daemon",
       action='store_true',
       default=False,
-      help='Run mpv'
+      help='Start mpv'
   )
 
   parser.add_argument(
@@ -218,13 +218,13 @@ def parse_args():
   group = parser.add_mutually_exclusive_group()
 
   group.add_argument(
-      '--ask-shows',
+      '--ask',
       default=True,
       action='store_true',
-      help='Ask for shows from a list')
+      help='Ask for directories from a list')
 
   group.add_argument(
-      '--no-ask-shows',
+      '--no-ask',
       default=False,
       action='store_true',
       help='Show all files in one list')
@@ -259,6 +259,7 @@ if __name__ == '__main__':
     mpv.stop()
 
   if args.seed:
+    print(args.dir)
     seed_playlist(args.dir, ask, args.sort, args.query)
     mpv.set_property("speed", args.speed)
 
@@ -268,7 +269,7 @@ if __name__ == '__main__':
   if not args.skip and not args.loop:
     exit()
 
-  subprocess.call(["clear"])
+  # subprocess.call(["clear"])
 
   while True:
     # TODO: watch redis pub/sub for events instead of querying mpv directly

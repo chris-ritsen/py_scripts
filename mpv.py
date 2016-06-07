@@ -6,8 +6,6 @@ import shlex
 import subprocess
 import time
 
-import redis
-
 class Player(object):
   def __init__(self):
     self.socket = None
