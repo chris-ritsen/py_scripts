@@ -54,6 +54,9 @@ class Player(object):
     else:
       print("Server already active with socket", socket)
 
+    # FIXME: hack
+    time.sleep(0.2)
+
 player = Player()
 
 def query_raw(command):
