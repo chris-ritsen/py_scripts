@@ -58,6 +58,9 @@ def seed_playlist(shows_path, ask=True, sort="normal", query=''):
   if not files:
     return
 
+  if not mpv.get_property('mpv-version'):
+    mpv.start()
+
   mpv.playlist_replace(files)
 
   # while mpv.path() not in files:
