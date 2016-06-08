@@ -3,6 +3,7 @@ import json
 import os
 import pprint
 import shlex
+import socket
 import subprocess
 import time
 
@@ -28,11 +29,9 @@ class Player(object):
     # if not started:
     #   return
 
-    socket = self.socket
-
     command = [
       "mpv",
-      "--input-unix-socket=" + socket,
+      "--input-unix-socket=" + self.socket,
       "--softvol-max=200",
       "--no-resume-playback",
       "--force-window=yes",
@@ -46,13 +45,13 @@ class Player(object):
     shell = os.environ["SHELL"]
 
     if not get_property('mpv-version'):
-      os.makedirs(os.path.dirname(socket), 0o775, True)
-      os.chmod(os.path.dirname(socket), 0o775)
+      os.makedirs(os.path.dirname(self.socket), 0o775, True)
+      os.chmod(os.path.dirname(self.socket), 0o775)
       # TODO: Check that the directory is actually usable
       subprocess.Popen(command)
-      print("Started mpv with socket", socket)
+      print("Started mpv with socket", self.socket)
     else:
-      print("Server already active with socket", socket)
+      print("Server already active with socket", self.socket)
 
     # FIXME: hack
     time.sleep(0.5)
@@ -60,16 +59,14 @@ class Player(object):
 player = Player()
 
 def query_raw(command):
-  socket = player.socket
-
-  if not socket:
+  if not player.socket:
     return
 
   try:
     command = shlex.quote(command)
-    cmd = " ".join(['echo', command, " | socat -", socket, "2> /dev/null"])
-    output = subprocess.check_output(cmd, shell=True)
-    value = json.loads(output.decode())
+
+    output = write_socket(command, player.socket)
+    value = json.loads(output)
 
     if "data" not in value:
       return
@@ -80,25 +77,24 @@ def query_raw(command):
   except:
     return
 
-def query(command):
-  socket = player.socket
+def write_socket(text, socket_file):
+  buffer = "{}\n".format(text).encode()
 
-  if not socket:
+  s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+  s.connect(socket_file)
+  s.send(buffer)
+  output = s.recv(1024).decode()
+  s.close()
+  return output
+
+def query(command):
+  if not player.socket:
     return
 
   try:
     _json = json.dumps({"command": command})
 
-    cmd = " ".join([
-      "echo '",
-      _json,
-      "' | socat -",
-      socket,
-      "2> /dev/null"
-    ])
-
-    output = subprocess.check_output(cmd, shell=True)
-    value = json.loads(output.decode())
+    value = json.loads(write_socket(_json, player.socket))
 
     if "data" not in value:
       return
