@@ -55,7 +55,7 @@ class Player(object):
       print("Server already active with socket", socket)
 
     # FIXME: hack
-    time.sleep(0.2)
+    time.sleep(0.5)
 
 player = Player()
 

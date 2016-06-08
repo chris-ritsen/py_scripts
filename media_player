@@ -63,8 +63,8 @@ def seed_playlist(shows_path, ask=True, sort="normal", query=''):
 
   mpv.playlist_replace(files)
 
-  # while mpv.path() not in files:
-  #   time.sleep(0.1)
+  while mpv.path() not in files:
+    time.sleep(0.1)
 
   mpv.player.unpause()
 
