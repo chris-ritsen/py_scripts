@@ -274,16 +274,16 @@ if __name__ == '__main__':
       print(mpv.get_property(args.prop))
     exit()
 
-  if args.daemon:
-    # TODO: Set a flag to build the playlist with edl://file.mkv;file2.mkv
-    mpv.player.start(args.merge)
-
   if args.stop:
     mpv.stop()
 
   if args.seed:
     seed_playlist(args.dir, ask, args.sort, args.query)
     mpv.set_property("speed", args.speed)
+
+  if args.daemon:
+    # TODO: Set a flag to build the playlist with edl://file.mkv;file2.mkv
+    mpv.player.start(args.merge)
 
   if args.shuffle:
     mpv.shuffle()
