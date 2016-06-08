@@ -59,7 +59,7 @@ def seed_playlist(shows_path, ask=True, sort="normal", query=''):
     return
 
   if not mpv.get_property('mpv-version'):
-    mpv.start()
+    mpv.player.start()
 
   mpv.playlist_replace(files)
 
