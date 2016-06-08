@@ -88,7 +88,8 @@ def get_episodes(shows, ask=True, sort="normal", query=''):
   for show in shows:
     for dirname, dirnames, filenames in os.walk(show):
       for filename in filenames:
-        episodes.append(os.path.join(dirname, filename))
+        episodes.append(os.path.abspath(os.path.join(dirname, filename)))
+
 
   episodes = list(set(filter(regex.match, episodes)))
 
