@@ -18,9 +18,9 @@ class Player(object):
 
   def start(self, merge=False):
 
-    # TODO: Restart player automatically in an attempt to keep playing from the
-    # same position.  This would help in cases where the player window is closed
-    # or the system restarts.
+    # TODO: Restart player automatically in an attempt to keep playing from
+    # the same position.  This would help in cases where the player window is
+    # closed or the system restarts.
 
     # r = redis.StrictRedis(host='localhost', port=6379, db=0)
     # started = r.get("started").decode().lower() == 'true'
