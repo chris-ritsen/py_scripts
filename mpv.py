@@ -11,6 +11,16 @@ class Player(object):
   def __init__(self):
     self.socket = None
 
+  def write_socket(self, text):
+    buffer = "{}\n".format(text).encode()
+
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(self.socket)
+    s.send(buffer)
+    output = s.recv(65565).decode()
+    s.close()
+    return output
+
   def pause(self):
     set_property("pause", True)
 
@@ -58,43 +68,18 @@ class Player(object):
 
 player = Player()
 
-def query_raw(command):
-  if not player.socket:
-    return
-
-  try:
-    command = shlex.quote(command)
-
-    output = write_socket(command, player.socket)
-    value = json.loads(output)
-
-    if "data" not in value:
-      return
-
-    value = value["data"]
-
-    return value
-  except:
-    return
-
-def write_socket(text, socket_file):
-  buffer = "{}\n".format(text).encode()
-
-  s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-  s.connect(socket_file)
-  s.send(buffer)
-  output = s.recv(65565).decode()
-  s.close()
-  return output
-
 def query(command):
   if not player.socket:
     return
 
   try:
-    _json = json.dumps({"command": command})
+    if type(command) == type([]):
+      command = json.dumps({"command": command})
+    elif type(command) == type(""):
+      command = shlex.quote(command)
 
-    value = json.loads(write_socket(_json, player.socket))
+    output = player.write_socket(command)
+    value = json.loads(output)
 
     if "data" not in value:
       return
@@ -115,7 +100,7 @@ def run(command):
   shell = os.environ["SHELL"]
   command = shell + ' -c "{}"'.format(";".join(command))
 
-  return query_raw("run " + command)
+  return query("run " + command)
 
 def get_property_string(_property):
   return query(["get_property_string", _property])
