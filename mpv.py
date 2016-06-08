@@ -83,7 +83,7 @@ def write_socket(text, socket_file):
   s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
   s.connect(socket_file)
   s.send(buffer)
-  output = s.recv(1024).decode()
+  output = s.recv(65565).decode()
   s.close()
   return output
 
