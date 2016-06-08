@@ -93,8 +93,6 @@ def query(command):
       "2> /dev/null"
     ])
 
-    print(cmd)
-
     output = subprocess.check_output(cmd, shell=True)
     value = json.loads(output.decode())
 
