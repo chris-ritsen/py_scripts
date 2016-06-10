@@ -57,6 +57,13 @@ if __name__ == '__main__':
   t.sessions = [
     {
       "detached": True,
+      "options": {
+        "remain-on-exit": True,
+        "set-remain-on-exit": True
+      },
+      "env": {
+        "MAIL": "/Media/Mail"
+      },
       "name": "admin",
       "windows": [
         {
@@ -72,11 +79,19 @@ if __name__ == '__main__':
           "target": "admin"
         }
       ]
+    },
+    {
+      "name": "admin@laptop"
+    },
+    {
+      "name": "admin@www"
     }
   ]
 
   if not t.has_server():
     t.start_server()
+
+  t.command(["list-sessions"])
 
   if args.attach:
     t.command(["attach"])

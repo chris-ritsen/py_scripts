@@ -1,6 +1,7 @@
 
-import subprocess
 import os
+import subprocess
+import time
 
 class Tmux(object):
   def __init__(self):
@@ -18,11 +19,33 @@ class Tmux(object):
 
   def start_server(self):
     for session in self.sessions:
-      windows = session["windows"]
-      self.new_session(session, windows[0])
+      if "windows" in session:
+        windows = session["windows"]
+        self.new_session(session, windows[0])
 
-      for window in windows[1:]:
-        self.new_window(window)
+        for window in windows[1:]:
+          self.new_window(window)
+
+      if session != self.sessions[0]:
+        cmd = [
+          "new-session",
+          "-d",
+          "-c",
+          "/home/chris",
+          "-s",
+          session["name"],
+          "-t",
+          self.sessions[0]["name"]
+        ]
+
+        self.command(cmd)
+
+    for session in self.sessions:
+      self.command([
+        "select-window",
+        "-t",
+        session["name"] + ":1"
+      ])
 
   def new_session(self, session, window):
     cmd = [
@@ -35,6 +58,24 @@ class Tmux(object):
     ]
 
     self.command(cmd)
+
+    for key, value in session["options"].items():
+      if type(value) == type(True):
+        value = "on" if value else "off"
+
+      self.command([
+        "set-option",
+        "-g",
+        key,
+        value
+      ])
+
+    for key, value in session["env"].items():
+      self.command([
+        "set-environment",
+        key,
+        value
+      ])
 
   def new_window(self, window):
     cmd = [
