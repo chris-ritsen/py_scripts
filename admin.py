@@ -56,6 +56,9 @@ if __name__ == '__main__':
 
   t.sessions = [
     {
+      "keys": {
+        "R": "respawn-window"
+      },
       "detached": True,
       "options": {
         "remain-on-exit": True,
@@ -91,7 +94,7 @@ if __name__ == '__main__':
   if not t.has_server():
     t.start_server()
 
-  t.command(["list-sessions"])
+  # t.command(["list-sessions"])
 
   if args.attach:
     t.command(["attach"])

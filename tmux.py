@@ -59,6 +59,13 @@ class Tmux(object):
 
     self.command(cmd)
 
+    for key, value in session["keys"].items():
+      self.command([
+        "bind-key",
+        key,
+        value
+      ])
+
     for key, value in session["options"].items():
       if type(value) == type(True):
         value = "on" if value else "off"
