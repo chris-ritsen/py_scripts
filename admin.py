@@ -75,17 +75,9 @@ ports = [
 # TODO: Test that emacs server is active
 # emacs_socket = "/tmp/emacs1000/server"
 
-ports = list(set(os.environ.keys()).intersection(ports))
-ports = [int(os.environ[i]) for i in ports]
-has_mpd = False
-
-for port in ports:
-  address = ('0.0.0.0', port)
-  result = sock.connect_ex(address)
-
-  if result == 0:
-    has_mpd = True
-    break
+ports = set(os.environ.keys()).intersection(ports)
+ports = [int(os.environ[key]) for key in ports]
+has_mpd = any([sock.connect_ex(('0.0.0.0', port)) == 0 for port in ports])
 
 # TODO: Check that emacs is running and run emacsclient
 
