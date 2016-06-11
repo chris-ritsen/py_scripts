@@ -66,13 +66,15 @@ sessions = [
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 ports = [
-  os.environ["MPD_BOOKS_PORT"],
-  os.environ["MPD_MUSIC_PORT"],
-  os.environ["MPD_STREAM_PORT"],
-  os.environ["MPD_VOICE_PORT"]
+  "MPD_BOOKS_PORT",
+  "MPD_MUSIC_PORT",
+  "MPD_STREAM_PORT",
+  "MPD_VOICE_PORT",
+  "invalid"
 ]
 
-ports = [int(i) for i in ports]
+ports = list(set(os.environ.keys()).intersection(ports))
+ports = [int(os.environ[i]) for i in ports]
 has_mpd = False
 
 for port in ports:
@@ -82,14 +84,11 @@ for port in ports:
     has_mpd = True
     break
 
-# TODO: Check that emacs is running and do emacsclient
+print(ports)
+# TODO: Check that emacs is running and run emacsclient
 
 if not has_mpd:
   del sessions[0]["windows"][4]
 
 sessions[0]["windows"] = sorted(sessions[0]["windows"], key=operator.itemgetter('index'))
-
-# print(list(map(lambda x: x["name"], sessions)))
-# print(list(map(lambda x: x["name"], sessions[0]["windows"])))
-# print(sessions)
 
