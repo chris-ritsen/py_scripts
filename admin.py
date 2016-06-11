@@ -82,6 +82,8 @@ for port in ports:
     has_mpd = True
     break
 
+# TODO: Check that emacs is running and do emacsclient
+
 if not has_mpd:
   del sessions[0]["windows"][4]
 
