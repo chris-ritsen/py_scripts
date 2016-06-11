@@ -1,101 +1,94 @@
-#!/usr/bin/env python3
 
-import argparse
+import operator
 import os
-import signal
-import stat
-import subprocess
-import sys
+import socket
 
-import tmux
+sessions = [
+  {
+    "keys": {
+      "R": "respawn-window"
+    },
+    "detached": True,
+    "options": {
+      "remain-on-exit": True,
+      "set-remain-on-exit": True
+    },
+    "env": {
+      "MAIL": "/Media/Mail"
+    },
+    "name": "admin",
+    "windows": [
+      {
+        "command": "dtach -A /home/chris/.tmp/dtach/notes -zE -r winch vim -u NONE",
+        "dir": "/home/chris/.documents/",
+        "index": 1,
+        "name": "notes",
+        "target": "admin"
+      },
+      {
+        "command": "dtach -A /home/chris/.tmp/dtach/finch -zE -r winch $SHELL -c finch --nologin",
+        "dir": "/home/chris/.documents/",
+        "index": 5,
+        "name": "chat",
+        "target": "admin"
+      },
+      {
+        "command": "dtach -A /home/chris/.tmp/dtach/irssi -zE -r ctrl_l $SHELL -c irssi --noconnect",
+        "dir": "/home/chris/",
+        "index": 4,
+        "name": "irc",
+        "target": "admin"
+      },
+      {
+        "command": "dtach -A /home/chris/.tmp/dtach/mutt -zE -r winch $SHELL -c mutt -e 'push <limit>!~l<enter>'",
+        "dir": "/home/chris/",
+        "index": 3,
+        "name": "mail",
+        "target": "admin"
+      },
+      {
+        "command": "vimpc",
+        "dir": "/home/chris/",
+        "index": 6,
+        "name": "music",
+        "target": "admin"
+      }
+    ]
+  },
+  {
+    "name": "admin@laptop"
+  },
+  {
+    "name": "admin@www"
+  }
+]
 
-def sig_handler(signal, frame):
-  sys.exit(0)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-def parse_args():
-  parser = argparse.ArgumentParser(
-      description='A way of scripting creation of tmux session on different sockets',
-      usage='%(prog)s [options]',
-      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+ports = [
+  os.environ["MPD_BOOKS_PORT"],
+  os.environ["MPD_MUSIC_PORT"],
+  os.environ["MPD_STREAM_PORT"],
+  os.environ["MPD_VOICE_PORT"]
+]
 
-  parser.add_argument(
-      "--socket",
-      default=os.environ["XDG_RUNTIME_DIR"] + '/default',
-      help='Socket for tmux',
-      type=str
-  )
+ports = [int(i) for i in ports]
 
-  parser.add_argument(
-      "-a",
-      "--attach",
-      action='store_true',
-      default=False,
-      help='Attach to tmux session'
-  )
+for port in ports:
+  result = sock.connect_ex(('0.0.0.0', port))
 
-  args = parser.parse_args()
-
-  return args
-
-if __name__ == '__main__':
-  signal.signal(signal.SIGINT, sig_handler)
-  args = parse_args()
-
-  if "XDG_RUNTIME_DIR" in os.environ:
-    socket_dir = os.environ["XDG_RUNTIME_DIR"]
+  if result == 0:
+    print("Port is open")
   else:
-    socket_dir = "/tmp/tmux-1000/"
+    print("Port is not open")
 
-  socket_dir = "/home/chris/.tmp/tmux/tmux-1000/"
-  socket_file = socket_dir + "admin"
+exit()
 
-  mode = os.stat(socket_file).st_mode
+del sessions[0]["windows"][4]
 
-  t = tmux.Tmux()
-  t.socket = socket_file
+sessions[0]["windows"] = sorted(sessions[0]["windows"], key=operator.itemgetter('index'))
 
-  t.sessions = [
-    {
-      "keys": {
-        "R": "respawn-window"
-      },
-      "detached": True,
-      "options": {
-        "remain-on-exit": True,
-        "set-remain-on-exit": True
-      },
-      "env": {
-        "MAIL": "/Media/Mail"
-      },
-      "name": "admin",
-      "windows": [
-        {
-          "command": "vim -u NONE",
-          "dir": "/home/chris/.documents/",
-          "name": "notes",
-          "target": "admin"
-        },
-        {
-          "command": "vimpc",
-          "dir": "/home/chris/",
-          "name": "music",
-          "target": "admin"
-        }
-      ]
-    },
-    {
-      "name": "admin@laptop"
-    },
-    {
-      "name": "admin@www"
-    }
-  ]
-
-  if not t.has_server():
-    t.start_server()
-
-  # t.command(["list-sessions"])
-
-  if args.attach:
-    t.command(["attach"])
+# print(list(map(lambda x: x["name"], sessions)))
+# print(list(map(lambda x: x["name"], sessions[0]["windows"])))
+# print(sessions)
 

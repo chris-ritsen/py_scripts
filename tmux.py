@@ -1,5 +1,6 @@
 
 import os
+import stat
 import subprocess
 import time
 
@@ -29,13 +30,10 @@ class Tmux(object):
       if session != self.sessions[0]:
         cmd = [
           "new-session",
+          "-c", "/home/chris",
           "-d",
-          "-c",
-          "/home/chris",
-          "-s",
-          session["name"],
-          "-t",
-          self.sessions[0]["name"]
+          "-s", session["name"],
+          "-t", self.sessions[0]["name"]
         ]
 
         self.command(cmd)
@@ -50,10 +48,10 @@ class Tmux(object):
   def new_session(self, session, window):
     cmd = [
       "new-session",
-      "-d",
-      "-s", session["name"],
       "-c", window["dir"],
+      "-d",
       "-n", window["name"],
+      "-s", session["name"],
       window["command"]
     ]
 
@@ -87,15 +85,16 @@ class Tmux(object):
   def new_window(self, window):
     cmd = [
       "new-window",
-      "-t", window["target"],
       "-c", window["dir"],
       "-n", window["name"],
+      "-t", window["target"],
       window["command"]
     ]
 
     self.command(cmd)
 
   def has_server(self):
+    # mode = os.stat(socket_file).st_mode
     # if stat.S_ISSOCK(mode):
     #   print("Socket file exists")
 
