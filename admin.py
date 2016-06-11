@@ -69,26 +69,29 @@ ports = [
   "MPD_BOOKS_PORT",
   "MPD_MUSIC_PORT",
   "MPD_STREAM_PORT",
-  "MPD_VOICE_PORT",
-  "invalid"
+  "MPD_VOICE_PORT"
 ]
+
+# TODO: Test that emacs server is active
+# emacs_socket = "/tmp/emacs1000/server"
 
 ports = list(set(os.environ.keys()).intersection(ports))
 ports = [int(os.environ[i]) for i in ports]
 has_mpd = False
 
 for port in ports:
-  result = sock.connect_ex(('0.0.0.0', port))
+  address = ('0.0.0.0', port)
+  result = sock.connect_ex(address)
 
   if result == 0:
     has_mpd = True
     break
 
-print(ports)
 # TODO: Check that emacs is running and run emacsclient
 
 if not has_mpd:
   del sessions[0]["windows"][4]
 
-sessions[0]["windows"] = sorted(sessions[0]["windows"], key=operator.itemgetter('index'))
+windows = sessions[0]["windows"]
+sessions[0]["windows"] = sorted(windows, key=operator.itemgetter('index'))
 
