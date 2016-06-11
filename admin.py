@@ -73,18 +73,17 @@ ports = [
 ]
 
 ports = [int(i) for i in ports]
+has_mpd = False
 
 for port in ports:
   result = sock.connect_ex(('0.0.0.0', port))
 
   if result == 0:
-    print("Port is open")
-  else:
-    print("Port is not open")
+    has_mpd = True
+    break
 
-exit()
-
-del sessions[0]["windows"][4]
+if not has_mpd:
+  del sessions[0]["windows"][4]
 
 sessions[0]["windows"] = sorted(sessions[0]["windows"], key=operator.itemgetter('index'))
 
