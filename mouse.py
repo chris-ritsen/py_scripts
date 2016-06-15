@@ -11,11 +11,19 @@ def _get_mouse_id():
   return int(mouse_id)
 
 def off():
-  call(["xinput", "disable", str(_device)])
+  try:
+    _device = _get_mouse_id()
+    call(["xinput", "disable", str(_device)])
+  except:
+    pass
+
   call(["xdotool", "mousemove", "0", "0"])
 
 def on():
-  call(["xinput", "enable", str(_device)])
+  try:
+    _device = _get_mouse_id()
+    call(["xinput", "enable", str(_device)])
+  except:
+    pass
 
-_device = _get_mouse_id()
 
