@@ -118,7 +118,7 @@ def watch_video():
 
     if pos > start and pos < stop and stop < length:
       # Current position is within range; skip ahead
-      mpv.set_property("time-pos", stop)
+      mpv.set_property_string("time-pos", str(stop))
       time.sleep(0.1)
       continue
 
