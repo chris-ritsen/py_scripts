@@ -5,25 +5,28 @@ from subprocess import call, check_output
 
 servername = 'BOOKS'
 
+
 def key(key):
-  call([
-    "vim",
-    "--servername",
-    servername,
-    "--remote-send",
-    key
-  ])
+    call([
+      "vim",
+      "--servername",
+      servername,
+      "--remote-send",
+      key
+    ])
+
 
 def expr(expr):
-  return check_output([
-    "vim",
-    "--servername",
-    servername,
-    "--remote-expr",
-    expr
-  ]).decode()
+    return check_output([
+      "vim",
+      "--servername",
+      servername,
+      "--remote-expr",
+      expr
+    ]).decode()
+
 
 def center_display():
-  key('<Esc>')
-  key('zz')
+    key('<Esc>')
+    key('zz')
 

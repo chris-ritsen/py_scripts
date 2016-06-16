@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-from getopt import getopt
-from os import path, environ
-from subprocess import call, check_output, check_call
 from time import sleep
 
 import argparse
 import signal
 import socket
+import subprocess
 import sys
 
 import tmux
@@ -16,87 +14,110 @@ import x
 
 window_name = 'books'
 
+
 def set_rate(rate):
-  check_output(["redis-cli", "set", "reading_speed", str(rate)])
+    subprocess.check_output(["redis-cli", "set", "reading_speed", str(rate)])
+
 
 def get_rate():
-  return float(check_output(["redis-cli", "get", "reading_speed"]).decode())
+    output = subprocess.check_output(
+      [
+        "redis-cli",
+        "get",
+        "reading_speed"
+      ]
+    ).decode()
+
+    return float(output)
+
 
 def make_window():
-  class_name = 'bigspaceurxvt'
-  desktop = 2
+    class_name = 'bigspaceurxvt'
+    desktop = 2
 
-  if socket.gethostname() == 'laptop':
-    class_name = 'bigspacelaptop'
+    if socket.gethostname() == 'laptop':
+        class_name = 'bigspacelaptop'
 
-  if not tmux.attached():
-    x.desktop(2)
-    x.term("books", class_name)
-    x.move(window_name, 2)
+    if not tmux.attached():
+        x.desktop(desktop)
+        x.term("books", class_name)
+        x.move(window_name, desktop)
 
-  call(["clear"])
+    subprocess.call(["clear"])
 
-  while not tmux.attached():
-    sleep(0.1)
+    while not tmux.attached():
+        sleep(0.1)
 
-  x.activate(window_name)
+    x.activate(window_name)
+
 
 def delay(seconds):
-  wait = seconds * get_rate()
-  sleep(wait)
+    wait = seconds * get_rate()
+    sleep(wait)
+
 
 def sig_handler(signal, frame):
-  sys.exit(0)
+    sys.exit(0)
+
 
 def read_word():
-  vim.key('<Esc>')
-  vim.key('w')
+    vim.key('<Esc>')
+    vim.key('w')
 
-  word_len = len(vim.expr('expand("<cWORD>")'))
+    cword = vim.expr('expand("<cWORD>")')
+    word_len = len(cword)
 
-  if word_len < 2:
-    delay(0.1)
-    return
+    if word_len < 2:
+        delay(0.1)
+        return
 
-  if word_len > 7:
-    delay(0.135)
-  else:
-    delay(0.05)
+    if word_len > 7:
+        delay(0.135)
+    else:
+        delay(0.05)
 
-  vim.key('<Esc>')
-  vim.key('e')
+    vim.key('<Esc>')
+    vim.key('e')
 
-  if word_len > 7:
-    delay(0.135)
-  else:
-    delay(0.05)
+    if word_len > 7:
+        delay(0.135)
+    else:
+        delay(0.05)
+
 
 def read_book():
-  if x.idle() < 3 or x.active_window() != window_name:
-    sleep(1)
-    return
+    if x.idle() < 3 or x.active_window() != window_name:
+        sleep(1)
+        return
 
-  vim.center_display()
-  read_word()
+    vim.center_display()
+    read_word()
+
 
 def main():
-  make_window()
+    make_window()
 
-  while tmux.attached():
-    read_book()
+    while tmux.attached():
+        read_book()
+
 
 def parse_args():
-  parser = argparse.ArgumentParser(description='Do stuff', prog='PROG', usage='%(prog)s [options]')
-  parser.add_argument('--speed', type=float, help='Rate to do stuff')
+    parser = argparse.ArgumentParser(
+      description='Do stuff',
+      prog='PROG',
+      usage='%(prog)s [options]'
+    )
 
-  args = parser.parse_args()
+    parser.add_argument('--speed', type=float, help='Rate to do stuff')
 
-  if args.speed and args.speed > 0:
-    rate = 1 / args.speed
-    set_rate(rate)
+    args = parser.parse_args()
+
+    if args.speed and args.speed > 0:
+        rate = 1 / args.speed
+        set_rate(rate)
 
 if __name__ == '__main__':
-  signal.signal(signal.SIGINT, sig_handler)
-  parse_args()
-  main()
+    signal.signal(signal.SIGINT, sig_handler)
+    parse_args()
+    main()
 

@@ -81,21 +81,19 @@ ports = [int(os.environ[key]) for key in ports]
 has_mpd = any([sock.connect_ex(('0.0.0.0', port)) == 0 for port in ports])
 
 try:
-  subprocess.check_output([
-    "emacsclient",
-    "--eval",
-    "(version)"
-  ], stderr=subprocess.PIPE)
+    subprocess.check_output([
+      "emacsclient",
+      "--eval",
+      "(version)"
+    ], stderr=subprocess.PIPE)
 except:
-  print("derp I gots no emacs")
-  # del sessions[0]["windows"][4]
-
-print([key for key, value in sessions[0]["windows"].items() if value == "notes"])
+    pass
+    # del sessions[0]["windows"][4]
 
 # TODO: Check that emacs is running and run emacsclient
 
 if not has_mpd:
-  del sessions[0]["windows"][4]
+    del sessions[0]["windows"][4]
 
 windows = sessions[0]["windows"]
 sessions[0]["windows"] = sorted(windows, key=operator.itemgetter('index'))

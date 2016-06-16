@@ -54,94 +54,96 @@ expr = "".join([
 
 regex = re.compile(expr)
 
+
 def get_episodes(shows, ask=True, sort="normal", query=''):
-  episodes = []
+    episodes = []
 
-  if ask:
+    if ask:
+        temp_file = '/tmp/mpv_dirnames'
 
-    temp_file = '/tmp/mpv_dirnames'
+        with open(temp_file, "w") as file:
+            for filename in shows:
+                file.write("%s\n" % filename)
 
-    with open(temp_file, "w") as file:
-      for filename in shows:
-        file.write("%s\n" % filename)
+        command = ["cat", temp_file]
+        ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-    command = ["cat", temp_file]
-    ps = subprocess.Popen(command, stdout=subprocess.PIPE)
+        try:
+            command = ["fzf"] + fzf_options
 
-    try:
-      command = ["fzf" ] + fzf_options
+            if query:
+                command += ["--query='" + query]
 
-      if query:
-        command += ["--query='" + query]
+            output = subprocess.check_output(command, stdin=ps.stdout)
+            output = output.decode()
+            ps.wait()
 
-      output = subprocess.check_output(command, stdin=ps.stdout).decode()
-      ps.wait()
+            output = (output.split("\n"))
+            shows = list(filter(None, output))
+        except:
+            shows = []
 
-      output = (output.split("\n"))
-      shows = list(filter(None, output))
-    except:
-      shows = []
+        if not shows:
+            return
 
-    if not shows:
-      return
+    for show in shows:
+        for dirname, dirnames, filenames in os.walk(show):
+            for filename in filenames:
+                filepath = os.path.join(dirname, filename)
+                episodes.append(os.path.abspath(filepath))
 
-  for show in shows:
-    for dirname, dirnames, filenames in os.walk(show):
-      for filename in filenames:
-        episodes.append(os.path.abspath(os.path.join(dirname, filename)))
+    episodes = list(set(filter(regex.match, episodes)))
 
+    if sort == "normal":
+        episodes.sort()
+    elif sort == "random":
+        random.shuffle(episodes)
 
-  episodes = list(set(filter(regex.match, episodes)))
+    return episodes
 
-  if sort == "normal":
-    episodes.sort()
-  elif sort == "random":
-    random.shuffle(episodes)
-  # eps = [episode(ep) for ep in episodes]
-
-  return episodes
 
 def get_playlist(shows_path, ask=True, sort="normal", query=''):
-  shows = get_shows(shows_path)
-  episodes = get_episodes(shows, ask, sort, query)
-  playlist = []
+    shows = get_shows(shows_path)
+    episodes = get_episodes(shows, ask, sort, query)
+    playlist = []
 
-  try:
-    temp_file = '/tmp/mpv_filenames'
+    try:
+        temp_file = '/tmp/mpv_filenames'
 
-    with open(temp_file, "w") as file:
-      for filename in episodes:
-        file.write("%s\n" % filename)
+        with open(temp_file, "w") as file:
+            for filename in episodes:
+                file.write("%s\n" % filename)
 
-    command = ["cat", temp_file]
-    ps = subprocess.Popen(command, stdout=subprocess.PIPE)
+        command = ["cat", temp_file]
+        ps = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-    command = ["fzf"] + fzf_options
+        command = ["fzf"] + fzf_options
 
-    if not ask and query:
-      command += ["--query='" + query + " "]
+        if not ask and query:
+            command += ["--query='" + query + " "]
 
-    output = subprocess.check_output(command, stdin=ps.stdout)
-    output = output.decode().split("\n")
-    playlist = list(set(filter(None, output)))
-    playlist.sort()
-    ps.wait()
-  except:
-    pass
+        output = subprocess.check_output(command, stdin=ps.stdout)
+        output = output.decode().split("\n")
+        playlist = list(set(filter(None, output)))
+        playlist.sort()
+        ps.wait()
+    except:
+        pass
 
-  return playlist
+    return playlist
+
 
 def get_shows(shows_path):
-  shows = []
+    shows = []
 
-  for dirname, dirnames, filenames in os.walk(shows_path):
-    shows.append(os.path.join(dirname))
+    for dirname, dirnames, filenames in os.walk(shows_path):
+        shows.append(os.path.join(dirname))
 
-    for subdirname in dirnames:
-      shows.append(os.path.join(dirname, subdirname))
+        for subdirname in dirnames:
+            shows.append(os.path.join(dirname, subdirname))
 
-  shows = list(set(filter(regex.match, shows)))
-  shows.sort()
+    shows = list(set(filter(regex.match, shows)))
+    shows.sort()
 
-  return shows
+    return shows
 
