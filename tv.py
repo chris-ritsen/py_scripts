@@ -70,6 +70,8 @@ shows = {
         (2662.66, float("inf"))
       ]
     },
+    # Stupid problem where it won't advance past the end.  It's not paused,
+    # but won't continue.
     "s02e16": {
       "ranges": [
         (218.927, 315.9),
@@ -86,6 +88,42 @@ shows = {
       "ranges": [
         (186.311, 282.15),
         (2785.298, float("inf"))
+      ]
+    },
+    "s02e19": {
+      "ranges": [
+        (205.205, 302.177),
+        (2673.921, float("inf"))
+      ]
+    },
+    "s02e20": {
+      "ranges": [
+        (204.663, 301.092),
+        (2679.51, float("inf"))
+      ]
+    },
+    "s02e21": {
+      "ranges": [
+        (202.285, 299.049),
+        (2679.051, float("inf"))
+      ]
+    },
+    "s02e22": {
+      "ranges": [
+        (184.393, 280.947),
+        (2678.092, float("inf"))
+      ]
+    },
+    "s03e01": {
+      "ranges": [
+        (213.86, 320.717),
+        (2680.074, float("inf"))
+      ]
+    },
+    "s03e02": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
       ]
     }
   },
