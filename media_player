@@ -105,8 +105,11 @@ def watch_video(train=False):
 
     ep_info = tv.shows[show_name][ep]
 
-    if not "length" in ep_info:
+    if "length" not in ep_info or ep_info["length"] is None:
         ep_info["length"] = mpv.length()
+
+    if ep_info["length"] is None:
+        return
 
     length = ep_info["length"]
     pos = mpv.time_pos() or 0
