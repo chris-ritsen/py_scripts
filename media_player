@@ -87,7 +87,7 @@ def episode(filename=''):
     return basename(filename).split(".")[0]
 
 
-def watch_video():
+def watch_video(train=False):
     mpv_playlist = mpv.playlist()
 
     if not mpv_playlist:
@@ -114,6 +114,9 @@ def watch_video():
 
     if mpv.get_property("pause"):
         return
+
+    if train and is_black():
+        print(pos, 'black')
 
     for i, (start, stop) in enumerate(ranges):
         if pos < start or pos > stop:
@@ -234,6 +237,13 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--train-skip',
+        default=False,
+        action='store_true',
+        help='Detect black frames to use for skip'
+    )
+
+    parser.add_argument(
         '--skip',
         default=False,
         action='store_true',
@@ -278,9 +288,7 @@ def is_black():
     pos = mpv.time_pos() or 0
     filename = mpv.path()
 
-    outfile = 'test.jpg'
-
-    subprocess.call(
+    image = subprocess.Popen(
       [
         "ffmpeg",
         "-ss", str(pos),
@@ -292,18 +300,20 @@ def is_black():
         "1",
         "-loglevel",
         "quiet",
-        outfile
-      ]
+        "-"
+      ],
+      stdout=subprocess.PIPE
     )
 
     average_color = subprocess.check_output(
       [
         "convert",
-        outfile,
+        "-",
         "-scale", "1x1!",
         "-format", "%[pixel:s]",
         "info:-"
-      ]
+      ],
+      stdin=image.stdout
     ).decode()
 
     return average_color == 'black' or average_color == 'srgb(0,0,0)'
@@ -354,5 +364,5 @@ if __name__ == '__main__':
         else:
             if args.skip:
                 # TODO: Skip should know about merge
-                watch_video()
+                watch_video(args.train_skip)
 
