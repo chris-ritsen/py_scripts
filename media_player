@@ -274,6 +274,41 @@ def parse_args():
     return args
 
 
+def is_black():
+    pos = mpv.time_pos() or 0
+    filename = mpv.path()
+
+    outfile = 'test.jpg'
+
+    subprocess.call(
+      [
+        "ffmpeg",
+        "-ss", str(pos),
+        "-i", filename,
+        "-y",
+        "-f", "image2",
+        "-vcodec", "mjpeg",
+        "-vframes",
+        "1",
+        "-loglevel",
+        "quiet",
+        outfile
+      ]
+    )
+
+    average_color = subprocess.check_output(
+      [
+        "convert",
+        outfile,
+        "-scale", "1x1!",
+        "-format", "%[pixel:s]",
+        "info:-"
+      ]
+    ).decode()
+
+    return average_color == 'black' or average_color == 'srgb(0,0,0)'
+
+
 if __name__ == '__main__':
     args = parse_args()
 
