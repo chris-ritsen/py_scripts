@@ -9,6 +9,86 @@
 # minute or more of nothing, such as intros and credits.
 
 shows = {
+  "cosmos.space_time_odyssey.a": {
+    "s01e01": {
+      "ranges": [
+        (139, 229.5),
+        (2601.35, float("inf"))
+      ]
+    },
+    "s01e02": {
+      "ranges": [
+        (46, 136.35),
+        (2551.632, float("inf"))
+      ]
+    },
+    "s01e03": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e04": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e05": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e06": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e07": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e08": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e09": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e10": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e11": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e12": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+    "s01e13": {
+      "ranges": [
+        # (, ),
+        # (, float("inf"))
+      ]
+    },
+  },
   "star_trek.next_generation.the": {
     "s02e06": {
       "ranges": [

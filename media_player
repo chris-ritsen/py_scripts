@@ -122,14 +122,22 @@ def watch_video(train=False):
         print(pos, 'black')
 
     for i, (start, stop) in enumerate(ranges):
-        if pos < start or pos > stop:
+        if start == stop:
+            continue
+
+        if pos < start or pos >= stop:
             # Outside of range
             continue
 
-        if pos > start and pos < stop and stop < length:
+        if pos >= start and pos < stop and stop < length:
             # Current position is within range; skip ahead
             mpv.set_property_string("time-pos", str(stop))
-            time.sleep(0.1)
+            time.sleep(0.2)
+            pos = mpv.time_pos()
+
+            if pos <= stop:
+                time.sleep(1)
+
             continue
 
         if pos > start and stop > length:
